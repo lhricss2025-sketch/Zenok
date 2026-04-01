@@ -1,6 +1,5 @@
 const express = require('express');
 const path = require('path');
-const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -68,7 +67,7 @@ app.post('/pair', async (req, res) => {
         if (!phoneNumber) {
             return res.status(400).json({
                 success: false,
-                error: 'Invalid format. Enter a Pakistani number starting with 92 followed by 10 digits (e.g. 9230012345678).'
+                error: 'Invalid format. Enter a Pakistani number starting with 92 followed by 10 digits (e.g. 923001234567).'
             });
         }
 
@@ -143,7 +142,7 @@ app.post('/generate-code', async (req, res) => {
         if (!cleaned) {
             return res.status(400).json({
                 success: false,
-                error: 'Invalid format. Please enter a Pakistani number starting with 92 followed by 10 digits (e.g. 9230012345678).'
+                error: 'Invalid format. Please enter a Pakistani number starting with 92 followed by 10 digits (e.g. 923001234567).'
             });
         }
 
