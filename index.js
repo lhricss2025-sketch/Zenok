@@ -92,7 +92,15 @@ async function cryptolordstart() {
 	});
 
     if (usePairingCode && !newbase.authState.creds.registered) {
-        const phoneNumber = await question(chalk.green.bold(`
+        // Detect whether we are running in an interactive terminal.
+        // On Railway (and other non-TTY environments) process.stdin.isTTY is
+        // undefined/false, so we skip the CLI prompt and let the web endpoint
+        // at /pair handle pairing code generation instead.
+        const isInteractive = process.stdin.isTTY && process.stdout.isTTY;
+
+        if (isInteractive) {
+            // ── Local / interactive development ──────────────────────────────
+            const phoneNumber = await question(chalk.green.bold(`
 ╭━━╮╭╮╱╭┳━━━╮
 ┃╭╮┃┃┃╱┃┃╭━╮┃
 ┃╰╯╰┫┃╱┃┃┃╱╰╯
@@ -109,23 +117,30 @@ async function cryptolordstart() {
 ╠ 𝐏𝐔𝐓 𝐘𝐎𝐔𝐑 𝐅𝐔𝐂𝐊𝐈𝐍𝐆 𝐍𝐔𝐌𝐁𝐄𝐑 : 
 ╚═══════════════════════◈ `
 ));
-        console.log(chalk.yellow.bold("𝐄𝐧𝐭𝐞𝐫 𝐏𝐚𝐬𝐬𝐰𝐨𝐫𝐝"));
+            console.log(chalk.yellow.bold("𝐄𝐧𝐭𝐞𝐫 𝐏𝐚𝐬𝐬𝐰𝐨𝐫𝐝"));
 
-        const pw = await question(chalk.yellow.bold("𝐏𝐚𝐬𝐬 : "));
+            const pw = await question(chalk.yellow.bold("𝐏𝐚𝐬𝐬 : "));
 
-        // Rakid password
-        if(pw !== "Emperor") {
-            console.log(chalk.yellow.bold("𝐖𝐫𝐨𝐧𝐠 𝐏𝐚𝐬𝐬𝐰𝐨𝐫𝐝\n𝐂𝐨𝐧𝐭𝐚𝐜𝐭 𝐓𝐡𝐞 𝐃𝐞𝐯𝐞𝐥𝐨𝐩𝐞𝐫 𝐓𝐨 𝐠𝐞𝐭 𝐂𝐨𝐫𝐫𝐞𝐜𝐟 𝐏𝐚𝐬𝐬\n𝐃𝐞𝐯 : 2349076642926"));
-            return
-        }
-        console.log(chalk.green.bold("𝐏𝐚𝐬𝐬𝐰𝐨𝐫𝐝 𝐆𝐞𝐧𝐞𝐫𝐚𝐭𝐞𝐝"));
-        const code = await newbase.requestPairingCode(phoneNumber,"EMPEROR1");
-        console.log(chalk.cyan.bold(`
+            // Rakid password
+            if(pw !== "Emperor") {
+                console.log(chalk.yellow.bold("𝐖𝐫𝐨𝐧𝐠 𝐏𝐚𝐬𝐬𝐰𝐨𝐫𝐝\n𝐂𝐨𝐧𝐭𝐚𝐜𝐭 𝐓𝐡𝐞 𝐃𝐞𝐯𝐞𝐥𝐨𝐩𝐞𝐫 𝐓𝐨 𝐠𝐞𝐭 𝐂𝐨𝐫𝐫𝐞𝐜𝐟 𝐏𝐚𝐬𝐬\n𝐃𝐞𝐯 : 2349076642926"));
+                return;
+            }
+            console.log(chalk.green.bold("𝐏𝐚𝐬𝐬𝐰𝐨𝐫𝐝 𝐆𝐞𝐧𝐞𝐫𝐚𝐭𝐞𝐝"));
+            const code = await newbase.requestPairingCode(phoneNumber, "EMPEROR1");
+            console.log(chalk.cyan.bold(`
 ╔═══𝘾𝙤𝙙𝙚 𝙂𝙚𝙣𝙚𝙧𝙖𝙩𝙚𝙙 ═══╗
 ║ 𝗬𝗼𝘂𝗿 𝗣𝗮𝗶𝗿𝗶𝗻𝗴 𝗖𝗼𝗱𝗲 : ${code}
 ╚══════════════════╝
  𝙇𝙞𝙣𝙠 𝙞𝙩 𝙩𝙤 𝙒𝙝𝙖𝙩𝙨𝘼𝙥𝙥 𝙁𝙖𝙨𝙩
 `));
+        } else {
+            // ── Non-interactive environment (Railway, Docker, etc.) ───────────
+            // Skip the CLI prompt entirely. The socket is registered with the
+            // web server below, so pairing codes can be requested through the
+            // /pair endpoint on the website instead.
+            console.log(chalk.cyan.bold('[EMPEROR] Non-interactive environment detected. Use the web UI to generate a pairing code.'));
+        }
     }
 
     // Register the socket with the web server so it can generate pairing codes
