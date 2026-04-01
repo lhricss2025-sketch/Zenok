@@ -101,8 +101,8 @@
           type="text"
           id="phoneNumber"
           name="phoneNumber"
-          placeholder="92300123456789"
-          maxlength="14"
+          placeholder="923001234567"
+          maxlength="12"
           inputmode="numeric"
           autocomplete="off"
           class="w-full pl-10 pr-4 py-3 rounded-xl text-slate-100 text-base
@@ -112,7 +112,7 @@
       </div>
 
       <p class="text-xs text-slate-500 mb-5">
-        Format: <span class="text-slate-400 font-medium">92</span> followed by 12 digits — no spaces or dashes
+        Format: <span class="text-slate-400 font-medium">92</span> followed by 10 digits — no spaces or dashes
       </p>
 
       <!-- Inline error -->
@@ -270,7 +270,7 @@
       const phoneNumber = phoneInput.value.trim();
 
       if (!/^92\d{10}$/.test(phoneNumber)) {
-        showFormError('Please enter a valid Pakistani number: 92 followed by exactly 10 digits (e.g. 9230012345678).');
+        showFormError('Please enter a valid Pakistani number: 92 followed by exactly 10 digits (e.g. 923001234567).');
         return;
       }
 
