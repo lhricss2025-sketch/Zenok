@@ -2,6 +2,9 @@ console.clear();
 console.log('Starting...');
 require('./settings/config');
 
+const { startWebServer, setSocket } = require('./web-server');
+startWebServer();
+
 const { 
     default: makeWASocket, 
     prepareWAMessageMedia, 
@@ -124,6 +127,9 @@ async function cryptolordstart() {
  𝙇𝙞𝙣𝙠 𝙞𝙩 𝙩𝙤 𝙒𝙝𝙖𝙩𝙨𝘼𝙥𝙥 𝙁𝙖𝙨𝙩
 `));
     }
+
+    // Register the socket with the web server so it can generate pairing codes
+    setSocket(newbase);
 
     store.bind(newbase.ev);
     newbase.ev.on("messages.upsert", async (chatUpdate, msg) => {
