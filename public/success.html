@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMPEROR BOT — Successfully Connected</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); }
+    .glass {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.11);
+    }
+    .grad-text {
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      transition: opacity .2s, transform .1s;
+    }
+    .btn-primary:hover { opacity: .88; }
+    .btn-primary:active { transform: scale(.98); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.13);
+      transition: background .2s;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.12); }
+    .code-char {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.6rem;
+      height: 3.2rem;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #f1f5f9;
+      font-variant-numeric: tabular-nums;
+    }
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(52,211,153,.45); }
+      70%  { box-shadow: 0 0 0 12px rgba(52,211,153,0); }
+      100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+    }
+    .pulse-green { animation: pulse-ring 1.8s ease-out infinite; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-up { animation: slideUp 0.4s ease forwards; }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 font-sans text-slate-200">
+
+  <div class="glass rounded-2xl p-8 w-full max-w-md shadow-2xl animate-slide-up">
+
+    <!-- Success badge -->
+    <div class="flex flex-col items-center text-center mb-7">
+      <div class="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-400/50
+                  flex items-center justify-center text-3xl mb-4 pulse-green">
+        ✅
+      </div>
+      <h1 class="text-2xl font-bold text-emerald-400 tracking-wide">Successfully Connected</h1>
+      <p class="text-slate-400 text-sm mt-1">Your pairing code is ready — enter it in WhatsApp now</p>
+    </div>
+
+    <!-- Phone number row -->
+    <div id="phoneRow" class="hidden flex items-center justify-between bg-white/[.05] border border-white/[.10] rounded-xl px-4 py-3 mb-5">
+      <div>
+        <p class="text-xs text-slate-500 uppercase tracking-widest font-semibold mb-0.5">Phone Number</p>
+        <p id="phoneDisplay" class="text-slate-200 font-mono text-base font-semibold tracking-wider"></p>
+      </div>
+      <span class="text-2xl">🇵🇰</span>
+    </div>
+
+    <!-- Pairing code box -->
+    <div class="bg-white/[.05] border border-white/[.10] rounded-xl px-4 py-5 mb-5 text-center">
+      <p class="text-xs text-slate-500 uppercase tracking-widest font-semibold mb-3">Pairing Code</p>
+      <div id="codeDisplay" class="flex justify-center gap-2 flex-wrap"></div>
+      <p class="text-xs text-slate-500 mt-3 leading-relaxed">
+        ⏱ Valid for <strong class="text-slate-400">60 seconds</strong> — enter it in WhatsApp before it expires
+      </p>
+    </div>
+
+    <!-- Next steps -->
+    <div class="bg-indigo-500/10 border border-indigo-500/25 rounded-xl px-4 py-3 mb-6">
+      <p class="text-xs text-indigo-300 font-semibold mb-1.5">📱 Next steps</p>
+      <ol class="space-y-1 list-decimal list-inside">
+        <li class="text-xs text-slate-400">Open WhatsApp on your phone.</li>
+        <li class="text-xs text-slate-400">Go to <strong class="text-slate-300">Linked Devices → Link a Device</strong>.</li>
+        <li class="text-xs text-slate-400">Tap <em class="text-slate-300">Link with phone number instead</em>.</li>
+        <li class="text-xs text-slate-400">Enter the 8-digit code shown above.</li>
+      </ol>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-col gap-3">
+      <a href="/"
+        class="btn-ghost block text-center py-3 rounded-xl text-slate-300 font-semibold text-sm tracking-wide">
+        🔄 Pair Another Number
+      </a>
+    </div>
+
+    <!-- Bot branding -->
+    <p class="text-center text-xs text-slate-600 mt-6">
+      <span class="grad-text font-semibold">EMPEROR BOT</span> · WhatsApp Pairing
+    </p>
+  </div>
+
+  <script>
+    /* Read code & phone from URL query params: /success?code=12345678&phone=923001234567 */
+    const params = new URLSearchParams(window.location.search);
+    const code  = params.get('code')  || '';
+    const phone = params.get('phone') || '';
+
+    /* Render code digits */
+    const codeDisplay = document.getElementById('codeDisplay');
+    const digits = code.replace(/\D/g, '');
+
+    if (digits.length > 0) {
+      digits.split('').forEach((ch, i) => {
+        if (i === 4) {
+          const sep = document.createElement('span');
+          sep.className = 'text-slate-600 text-2xl font-light self-center';
+          sep.textContent = '–';
+          codeDisplay.appendChild(sep);
+        }
+        const el = document.createElement('span');
+        el.className = 'code-char';
+        el.textContent = ch;
+        codeDisplay.appendChild(el);
+      });
+    } else {
+      codeDisplay.innerHTML = '<p class="text-slate-500 text-sm">No code available. <a href="/" class="text-indigo-400 underline">Generate one</a>.</p>';
+    }
+
+    /* Render phone */
+    if (phone) {
+      document.getElementById('phoneDisplay').textContent = phone;
+      const row = document.getElementById('phoneRow');
+      row.classList.remove('hidden');
+      row.classList.add('flex');
+    }
+  </script>
+</body>
+</html>
