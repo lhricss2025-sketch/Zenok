@@ -17,6 +17,7 @@
   "author": "EMPEROR",
   "license": "MIT",
   "dependencies": {
+  "express": "^4.19.2",
   "awesome-phonenumber": "^2.64.0",
   "@whiskeysockets/baileys": "npm:baileys-mod@latest",
     "axios": "^1.7.7",
