@@ -94,7 +94,7 @@ if (waSocket.authState.creds.registered) {
 
 // Generate REAL pairing code
 try {
-    code = await waSocket.requestPairingCode(phoneNumber);
+    code = await waSocket.requestPairingCode(phoneNumber, "EMPEROR1");
     
     // Validate code
     if (!code || code.length !== 8) {
@@ -161,7 +161,7 @@ app.post('/generate-code', async (req, res) => {
             });
         }
 
-        const code = await waSocket.requestPairingCode(cleaned);
+        const code = await waSocket.requestPairingCode(cleaned, "EMPEROR1");
         pairingStore.set(cleaned, { code, generatedAt: Date.now() });
 
         return res.json({
