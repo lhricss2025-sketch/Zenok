@@ -52,7 +52,7 @@ app.get('/success', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'success.html'));
 });
 
-// POST /pair — validate number, generate pairing code, return JSON
+// POST /pair — validate number, request a REAL pairing code from Baileys, return JSON
 app.post('/pair', async (req, res) => {
     try {
         const raw = req.body.phoneNumber || req.body.phone_number || '';
@@ -68,27 +68,43 @@ app.post('/pair', async (req, res) => {
         if (!phoneNumber) {
             return res.status(400).json({
                 success: false,
-                error: 'Invalid format. Enter a Pakistani number starting with 92 followed by 10 digits (e.g. 9230012345678).'
+                error: 'Invalid format. Enter a Pakistani number starting with 92 followed by 10 digits (e.g. 923001234567).'
             });
         }
 
-        let code;
-
-        if (waSocket && !waSocket.authState.creds.registered) {
-            // Request a real pairing code from Baileys
-            try {
-                code = await waSocket.requestPairingCode(phoneNumber);
-            } catch (baileyErr) {
-                console.error('[web-server] Baileys requestPairingCode error:', baileyErr);
-                // Fall back to a random 8-digit code so the UI still works
-                code = crypto.randomInt(10000000, 99999999).toString();
-            }
-        } else {
-            // Bot not yet connected or already registered — generate a random 8-digit code
-            code = crypto.randomInt(10000000, 99999999).toString();
+        // Reject immediately if the bot socket is not yet available
+        if (!waSocket) {
+            console.warn('[web-server] /pair called but waSocket is not ready yet.');
+            return res.status(503).json({
+                success: false,
+                error: 'Bot is still starting up. Please wait a few seconds and try again.'
+            });
         }
 
-        // Persist in memory
+        // Reject if this session is already linked — a pairing code would be meaningless
+        if (waSocket.authState.creds.registered) {
+            console.warn('[web-server] /pair called but session is already registered.');
+            return res.status(400).json({
+                success: false,
+                error: 'This bot session is already linked to a WhatsApp account.'
+            });
+        }
+
+        // Always request a real code from Baileys — never fall back to a random one
+        let code;
+        try {
+            console.log(`[web-server] Requesting pairing code for ${phoneNumber} …`);
+            code = await waSocket.requestPairingCode(phoneNumber);
+            console.log(`[web-server] Pairing code received for ${phoneNumber}: ${code}`);
+        } catch (baileyErr) {
+            console.error('[web-server] Baileys requestPairingCode error:', baileyErr);
+            return res.status(500).json({
+                success: false,
+                error: 'WhatsApp rejected the pairing request. Make sure the number is registered on WhatsApp and try again.'
+            });
+        }
+
+        // Persist in memory so /verify can check it later
         pairingStore.set(phoneNumber, { code, generatedAt: Date.now() });
 
         return res.json({
@@ -105,6 +121,18 @@ app.post('/pair', async (req, res) => {
             error: 'Failed to generate pairing code. Please try again.'
         });
     }
+});
+
+// GET /verify — check whether the bot session is now fully registered/connected
+app.get('/verify', (req, res) => {
+    const connected = !!(waSocket && waSocket.authState.creds.registered);
+    return res.json({
+        success: true,
+        connected,
+        message: connected
+            ? 'Bot is connected and the session is active.'
+            : 'Bot is not yet connected or the session is not registered.'
+    });
 });
 
 // POST /generate-code — legacy alias kept for backwards compatibility
