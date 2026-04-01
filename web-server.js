@@ -34,11 +34,11 @@ function setSocket(sock) {
 
 /**
  * Validate a Pakistani phone number.
- * Must start with 92 and be exactly 11 digits total.
+ * Must start with 92 and be exactly 12 digits total.
  */
 function validatePakistaniNumber(raw) {
     const cleaned = String(raw).trim().replace(/[\s\-().+]/g, '');
-    if (!/^92\d{9}$/.test(cleaned)) return null;
+    if (!/^92\d{10}$/.test(cleaned)) return null;
     return cleaned;
 }
 
@@ -68,7 +68,7 @@ app.post('/pair', async (req, res) => {
         if (!phoneNumber) {
             return res.status(400).json({
                 success: false,
-                error: 'Invalid format. Enter a Pakistani number starting with 92 followed by 9 digits (e.g. 923001234567).'
+                error: 'Invalid format. Enter a Pakistani number starting with 92 followed by 10 digits (e.g. 9230012345678).'
             });
         }
 
@@ -120,7 +120,7 @@ app.post('/generate-code', async (req, res) => {
         if (!cleaned) {
             return res.status(400).json({
                 success: false,
-                error: 'Invalid format. Please enter a Pakistani number starting with 92 followed by 9 digits (e.g. 923001234567).'
+                error: 'Invalid format. Please enter a Pakistani number starting with 92 followed by 10 digits (e.g. 9230012345678).'
             });
         }
 
