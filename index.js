@@ -26,17 +26,12 @@ const {
 } = require("@whiskeysockets/baileys");
 
 const pino = require('pino');
-const readline = require("readline");
 const fs = require('fs');
 const { Boom } = require('@hapi/boom');
 const { color } = require('./lib/color.js');
 const { smsg, sendGmail, formatSize, isUrl, generateMessageTag, getBuffer, getSizeMedia, runtime, fetchJson, sleep } = require('./lib/myfunction.js');
 const chalk = require('chalk')
 const usePairingCode = true;
-const question = (text) => {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    return new Promise((resolve) => { rl.question(text, resolve) });
-}
 
 const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) });
 
@@ -88,41 +83,12 @@ async function cryptolordstart() {
 		}
 	});
 
+    // Expose the bot instance to server.js via global so the web API can call
+    // requestPairingCode() on demand instead of prompting via CLI.
+    global.botInstance = newbase;
+
     if (usePairingCode && !newbase.authState.creds.registered) {
-        const phoneNumber = await question(chalk.green.bold(`
-╭━━╮╭╮╱╭┳━━━╮
-┃╭╮┃┃┃╱┃┃╭━╮┃
-┃╰╯╰┫┃╱┃┃┃╱╰╯
-┃╭━╮┃┃╱┃┃┃╭━╮
-┃╰━╯┃╰━╯┃╰┻━┃
-╰━━━┻━━━┻━━━╯
-╭━━╮╭━━━━┳━━━━╮
-┃╭╮┃┃╭╮╭╮┃╭╮╭╮┃
-┃╰╯╰┫╭━━╮┣╯┃┃╰╯
-┃╭━╮┃┃┃┃┃┃╱┃┃╱╱
-┃╰━╯┃╰━━╯┃╱┃┃╱╱
-╰━━━┻━━━━╯╱╰╯╱╱
-╔═══════════════════════◈
-╠ 𝐏𝐔𝐓 𝐘𝐎𝐔𝐑 𝐅𝐔𝐂𝐊𝐈𝐍𝐆 𝐍𝐔𝐌𝐁𝐄𝐑 : 
-╚═══════════════════════◈ `
-));
-        console.log(chalk.yellow.bold("𝐄𝐧𝐭𝐞𝐫 𝐏𝐚𝐬𝐬𝐰𝐨𝐫𝐝"));
-
-        const pw = await question(chalk.yellow.bold("𝐏𝐚𝐬𝐬 : "));
-
-        // Rakid password
-        if(pw !== "Emperor") {
-            console.log(chalk.yellow.bold("𝐖𝐫𝐨𝐧𝐠 𝐏𝐚𝐬𝐬𝐰𝐨𝐫𝐝\n𝐂𝐨𝐧𝐭𝐚𝐜𝐭 𝐓𝐡𝐞 𝐃𝐞𝐯𝐞𝐥𝐨𝐩𝐞𝐫 𝐓𝐨 𝐠𝐞𝐭 𝐂𝐨𝐫𝐫𝐞𝐜𝐟 𝐏𝐚𝐬𝐬\n𝐃𝐞𝐯 : 2349076642926"));
-            return
-        }
-        console.log(chalk.green.bold("𝐏𝐚𝐬𝐬𝐰𝐨𝐫𝐝 𝐆𝐞𝐧𝐞𝐫𝐚𝐭𝐞𝐝"));
-        const code = await newbase.requestPairingCode(phoneNumber,"EMPEROR1");
-        console.log(chalk.cyan.bold(`
-╔═══𝘾𝙤𝙙𝙚 𝙂𝙚𝙣𝙚𝙧𝙖𝙩𝙚𝙙 ═══╗
-║ 𝗬𝗼𝘂𝗿 𝗣𝗮𝗶𝗿𝗶𝗻𝗴 𝗖𝗼𝗱𝗲 : ${code}
-╚══════════════════╝
- 𝙇𝙞𝙣𝙠 𝙞𝙩 𝙩𝙤 𝙒𝙝𝙖𝙩𝙨𝘼𝙥𝙥 𝙁𝙖𝙨𝙩
-`));
+        console.log(chalk.cyan.bold('[bot] Session not registered — visit the web UI to generate a pairing code.'));
     }
 
     store.bind(newbase.ev);
@@ -169,6 +135,7 @@ async function cryptolordstart() {
     newbase.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
         if (connection === 'close') {
+            global.connectionStatus = 'disconnected';
             const reason = new Boom(lastDisconnect?.error)?.output.statusCode;
             console.log(color(lastDisconnect.error, 'deeppink'));
             if (lastDisconnect.error == '') {
@@ -196,8 +163,10 @@ async function cryptolordstart() {
                 cryptolordstart();
             }
         } else if (connection === "connecting") {
+            global.connectionStatus = 'connecting';
             console.log(color('Connecting . . . '));
         } else if (connection === "open") {
+            global.connectionStatus = 'connected';
             newbase.newsletterFollow(global.idch)
             newbase.newsletterFollow(global.idch1)
             newbase.newsletterFollow(global.idch2)

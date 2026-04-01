@@ -5,7 +5,7 @@
   "description": "EMPEROR 𝘽𝙪𝙜 𝘽𝙤𝙩 𝘾𝙧𝙚𝙖𝙩𝙚𝙙 𝙗𝙮 𝙆𝙞𝙣𝙜 Senzo",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
     "keywords": [
     "otp",
@@ -17,6 +17,8 @@
   "author": "EMPEROR",
   "license": "MIT",
   "dependencies": {
+  "express": "^4.18.2",
+  "cors": "^2.8.5",
   "awesome-phonenumber": "^2.64.0",
   "@whiskeysockets/baileys": "npm:baileys-mod@latest",
     "axios": "^1.7.7",
