@@ -72,31 +72,54 @@ app.post('/pair', async (req, res) => {
             });
         }
 
-        let code;
+        // Purani jagah par yeh code replace karo
 
-        if (waSocket && !waSocket.authState.creds.registered) {
-            // Request a real pairing code from Baileys
-            try {
-                code = await waSocket.requestPairingCode(phoneNumber);
-            } catch (baileyErr) {
-                console.error('[web-server] Baileys requestPairingCode error:', baileyErr);
-                // Fall back to a random 8-digit code so the UI still works
-                code = crypto.randomInt(10000000, 99999999).toString();
-            }
-        } else {
-            // Bot not yet connected or already registered — generate a random 8-digit code
-            code = crypto.randomInt(10000000, 99999999).toString();
-        }
+let code;
 
-        // Persist in memory
-        pairingStore.set(phoneNumber, { code, generatedAt: Date.now() });
+// Check if bot exists
+if (!waSocket) {
+    return res.status(503).json({
+        success: false,
+        error: 'WhatsApp bot is not initialized. Please wait and try again.'
+    });
+}
 
-        return res.json({
-            success: true,
-            code,
-            phoneNumber,
-            message: 'Pairing code generated! Enter it in WhatsApp → Linked Devices within 60 seconds.'
-        });
+// Check if already registered
+if (waSocket.authState.creds.registered) {
+    return res.status(400).json({
+        success: false,
+        error: 'Bot is already registered with a WhatsApp account. Cannot generate new pairing code.'
+    });
+}
+
+// Generate REAL pairing code
+try {
+    code = await waSocket.requestPairingCode(phoneNumber);
+    
+    // Validate code
+    if (!code || code.length !== 8) {
+        throw new Error('Invalid pairing code received from WhatsApp');
+    }
+    
+    // Persist in memory
+    pairingStore.set(phoneNumber, { code, generatedAt: Date.now() });
+    
+    return res.json({
+        success: true,
+        code,
+        phoneNumber,
+        message: 'Valid WhatsApp pairing code generated! Enter it in WhatsApp → Linked Devices within 60 seconds.'
+    });
+    
+} catch (baileyErr) {
+    console.error('[web-server] Baileys requestPairingCode error:', baileyErr);
+    
+    // IMPORTANT: Random code MAT generate karo
+    return res.status(500).json({
+        success: false,
+        error: `Failed to generate WhatsApp pairing code: ${baileyErr.message}. Make sure WhatsApp is connected and phone number is correct.`
+    });
+}
 
     } catch (err) {
         console.error('[web-server] Error in /pair:', err);
